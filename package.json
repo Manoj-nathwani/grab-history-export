@@ -1,0 +1,11 @@
+{
+  "name": "grab-history-export",
+  "version": "1.0.0",
+  "description": "Download your full Grab booking history (rides, GrabFood, GrabMart) as CSV and JSON.",
+  "type": "module",
+  "bin": { "grab-history": "grab-history.mjs" },
+  "scripts": { "start": "node grab-history.mjs" },
+  "engines": { "node": ">=18" },
+  "keywords": ["grab", "grabfood", "grabmart", "grabbike", "grabcar", "ride-history", "order-history", "export", "csv", "receipts"],
+  "license": "MIT"
+}

@@ -1,0 +1,7 @@
+# Your downloaded history: personal data, never commit it.
+grab-history*.csv
+grab-history*.json
+*.csv
+*.json
+!package.json
+.env
