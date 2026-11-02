@@ -6,16 +6,18 @@
  * Uses the same endpoint as Grab's own help centre (help.grab.com), with your
  * own logged-in session token. Nothing is sent anywhere else.
  *
- *   GRAB_TOKEN=<token> node grab-history.mjs [--months 36] [--out grab-history] [--no-locations]
+ *   GRAB_TOKEN=<token> node grab-history.mjs [--months 13] [--out grab-history] [--no-locations]
  *
  * No dependencies. Node 18 or newer.
  */
 import { writeFile } from "node:fs/promises";
 
 const URL = "https://api.grab.com/helpcenter/v1/passengers/bookinghistory";
+/** Grab answers for any window that starts within the last 365 days. */
+const MAX_AGE_MS = 365 * 24 * 3600_000 - 3600_000;
 
 function parseArgs(argv) {
-  const args = { months: 36, out: "grab-history", locations: true };
+  const args = { months: 13, out: "grab-history", locations: true };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--months") args.months = Number(argv[++i]);
@@ -23,7 +25,7 @@ function parseArgs(argv) {
     else if (arg === "--no-locations") args.locations = false;
     else if (arg === "--help" || arg === "-h") {
       console.log(
-        "GRAB_TOKEN=<token> node grab-history.mjs [--months 36] [--out grab-history] [--no-locations]",
+        "GRAB_TOKEN=<token> node grab-history.mjs [--months 13] [--out grab-history] [--no-locations]",
       );
       process.exit(0);
     } else {
@@ -58,8 +60,11 @@ async function fetchWindow(token, start, end) {
       "Grab refused the token. It lasts about two hours: copy a fresh one (see README).",
     );
   }
-  if (!response.ok) return { ok: false, status: response.status, items: [] };
-  const body = await response.json();
+  const body = await response.json().catch(() => ({}));
+  // Grab answers {errors: [...]} for a window older than it keeps.
+  if (!response.ok || body.errors) {
+    return { ok: false, status: response.status, items: [] };
+  }
   return { ok: true, items: body.receiptItems ?? [] };
 }
 
@@ -78,16 +83,24 @@ async function main() {
   }
 
   const now = new Date();
+  const oldest = new Date(now.getTime() - MAX_AGE_MS);
   const byId = new Map();
   // One month per request, newest first, so a long history never hits a cap.
+  // The oldest window is cut to start exactly where Grab's year begins.
   for (let back = 0; back < args.months; back += 1) {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1));
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1));
     const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back + 1, 1) - 1);
-    const month = start.toISOString().slice(0, 7);
+    if (end < oldest) break;
+    const start = monthStart < oldest ? oldest : monthStart;
+    const month = monthStart.toISOString().slice(0, 7);
     const { ok, status, items } = await fetchWindow(token, start, end);
-    if (!ok) console.log(`${month}: no answer (HTTP ${status})`);
-    else if (items.length) console.log(`${month}: ${items.length} bookings`);
+    if (!ok) {
+      console.log(`${month}: older than Grab keeps (HTTP ${status}), stopping`);
+      break;
+    }
+    if (items.length) console.log(`${month}: ${items.length} bookings`);
     for (const item of items) byId.set(item.id, item);
+    if (start === oldest) break;
     await sleep(300);
   }
 

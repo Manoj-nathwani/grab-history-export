@@ -2,7 +2,7 @@
 
 Download your **whole Grab booking history** (rides, GrabFood, GrabMart, GrabExpress and the rest) as a CSV and JSON file, in one command.
 
-The Grab app and help centre only let you look back a few months, one receipt at a time. This script asks Grab's own help-centre endpoint for your bookings one month at a time, so you get everything Grab still holds for your account. On the author's account that was 11 months (199 bookings), not 6.
+The Grab app and help centre only let you look back a few months, one receipt at a time. This script asks Grab's own help-centre endpoint for your bookings one month at a time and gets a full year back: Grab answers for any window starting within the last 365 days. On the author's account that was 200 bookings, not 6 months' worth.
 
 Useful for:
 
@@ -50,7 +50,7 @@ You need [Node.js](https://nodejs.org) 18 or newer. No other dependencies.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--months N` | `36` | How many months back to ask for. Months Grab no longer holds come back empty. |
+| `--months N` | `13` | How many calendar months back to ask for. The script stops at Grab's 365-day limit anyway. |
 | `--out NAME` | `grab-history` | Output file name, without extension. |
 | `--no-locations` | off | Leave pick-up and drop-off places out of the files. |
 
@@ -64,7 +64,7 @@ The token is your logged-in Grab session. Anyone who has it can act as you on Gr
 
 ## How it works
 
-`help.grab.com` loads your past bookings from `POST https://api.grab.com/helpcenter/v1/passengers/bookinghistory` with a date range in the body. The site only asks for recent months; the endpoint answers older ranges too. The script asks for one calendar month per request, newest first, with a short pause between requests, and merges the results by booking id.
+`help.grab.com` loads your past bookings from `POST https://api.grab.com/helpcenter/v1/passengers/bookinghistory` with a date range in the body. The site only asks for recent months; the endpoint answers any range that starts within the last 365 days, and returns an error for anything older. The script asks for one calendar month per request, newest first, cuts the oldest window to start exactly 365 days ago, stops there, and merges the results by booking id.
 
 If Grab changes the endpoint, the script will stop working. Issues and pull requests are welcome.
 
