@@ -4,12 +4,15 @@ Download your **whole Grab booking history** (rides, GrabFood, GrabMart, GrabExp
 
 The Grab app and help centre only let you look back a few months, one receipt at a time. This script makes the same request as Grab's own help page, [Retrieve detailed Grab transaction history](https://help.grab.com/passenger/en-th/360038782911-Retrieve-detailed-Grab-transaction-history), one month at a time, and asks for up to a year back.
 
-**Older bookings can be incomplete.** The help page's date picker only goes back about 6 months. The endpoint accepts windows up to a year back and returns full records for what it does send (not anonymised), but it does not send everything. On the author's account, against bank statements:
+**Older bookings are incomplete.** Grab's help page says the history covers the past 6 months, up to 300 transactions per download. The endpoint answers for windows up to a year back, but tested on the author's account:
 
-- **Last ~7 months:** rides and food orders, about 94% complete.
-- **Older:** rides only, with gaps. Not a single GrabFood or GrabMart order came back from before that point, and March was missing most bookings.
+- **GrabFood and GrabMart:** only about the last 6 to 7 months come back. Nothing older is returned, whatever the window.
+- **Rides:** about a year comes back, with gaps. Some bookings on the bank statement are not returned at all.
+- **Smaller windows don't help:** asking day by day returns exactly what one month at a time does.
+- **No single-booking lookup:** there is no known endpoint to fetch one booking by its id.
+- **Not anonymised:** what does come back carries full fields.
 
-So treat anything older than about 6 months as a partial list, and cross-check against your bank if completeness matters.
+So run it at least every 6 months to keep your food orders, and cross-check older months against your bank if completeness matters.
 
 Useful for:
 
